@@ -2,8 +2,21 @@ function gpxParser() {
 	this.parseGPX = function() {
 
 		/* Example */
-		var params = {
-			name: 'TipTop track',
+		var jsonExampleData = {
+			metadata: {
+				name: 'The name of the GPX file',
+				desc: 'A description of the contents of the GPX file',
+				author: {
+					name: 'Author name'
+				},
+				time: '2007-10-02T07:51:30Z',
+			},
+			trkdata: {
+				name: 'GPS name of track',
+				cmt: 'GPS comment for track',
+				desc: 'User description of track',
+				number: '1',
+			},
 			trkpts: [{
 				attributes: {
 					lat: '46.57608333',
@@ -28,41 +41,42 @@ function gpxParser() {
 			}]
 		};
 
-		return _toGPX(params);
+		return _toGPX(jsonExampleData);
 	}
 
 	this.parseJSON = function() {
 		/* Will be implemented as soon as possible */
 	}
 
-	var _toJSON = function(track) {
+	var _toJSON = function(gpxData) {
 		var parser = new DOMParser();
 	};
 
-	var _toGPX = function(params) {
+	var _toGPX = function(jsonData) {
 
-		var name = params.name;
-		var trkpts = params.trkpts;
+		var metadata = jsonData.metadata;
+		var trkdata = jsonData.trkdata;
+		var trkpts = jsonData.trkpts;
 		
 		/* Create gpx document*/
 		var gpxDoc = document.implementation.createDocument('', '', null);
 
+		/* Initialize gpx element */
 		var gpxElem = _createRoot(gpxDoc);
+
+		/* Initialize metadata */
 		var metadataElem = gpxDoc.createElement('metadata');
+		metadataElem = _createMetadata(gpxDoc, metadata, metadataElem);
 
-		if(name) {
-			var nameElem = gpxDoc.createElement('name');
-			var nameVal = gpxDoc.createTextNode(name);
-			nameElem.appendChild(nameVal);
-		}
-
+		/* Initialize track info */
 		var trkElem = gpxDoc.createElement('trk');
-		var trksegElem = gpxDoc.createElement('trkseg');
+		trkElem = _createTrackData(gpxDoc, trkdata, trkElem);
 
+		/* Initialize tack segments info */
+		var trksegElem = gpxDoc.createElement('trkseg');
 		trksegElem = _createTrkPts(gpxDoc, trkpts, trksegElem);
 
 		/* Mounting of the GPX tree */
-		metadataElem.appendChild(nameElem);
 		gpxElem.appendChild(metadataElem);
 		trkElem.appendChild(trksegElem);
 		gpxElem.appendChild(trkElem);
@@ -74,7 +88,7 @@ function gpxParser() {
 
 		/* Attributes for GXP 1.1 version */
 		var VERSION = '1.1';
-		var CREATOR = ''; //Creator name. Example: Application name.
+		var CREATOR = 'Software that created your GPX document'; //Creator name. Example: Application name.
 		var XMLNS_XSI = 'http://www.w3.org/2001/XMLSchema-instance';
 		var XMLNS = 'http://www.topografix.com/GPX/1/1';
 		var XSI_SCHEMALOCATION = 'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd';
@@ -89,8 +103,96 @@ function gpxParser() {
 		return gxpElem;
 	};
 
-	var _createMetadata = function() {
+	var _createMetadata = function(gpxDoc, metadata, metadataElem) {
+		var name = metadata.name;
+		var descFile = metadata.desc;
+		var author = metadata.author;
+		var fileTime = metadata.time;
 
+		/* The name of the GPX file */
+		if(name) {
+			var nameElem = gpxDoc.createElement('name');
+			var nameVal = gpxDoc.createTextNode(name);
+
+			nameElem.appendChild(nameVal);
+			metadataElem.appendChild(nameElem);
+		}
+
+		/* A description of the contents of the GPX file */
+		if(descFile) {
+			var descElem = gpxDoc.createElement('desc');
+			var descVal = gpxDoc.createTextNode(descFile);
+
+			descElem.appendChild(descVal);
+			metadataElem.appendChild(descElem);
+		}
+
+		/* Author name or URL */
+		if(author.name) {
+			var authorElem = gpxDoc.createElement('author');
+			var authorNameElem = gpxDoc.createElement('name');
+
+			authorVal = gpxDoc.createTextNode(author.name);
+			authorNameElem.appendChild(authorVal);
+			authorElem.appendChild(authorNameElem);
+			metadataElem.appendChild(authorElem);
+		}
+
+		/* The creation date of the file */
+		if(fileTime) {
+			var fileTimeElem = gpxDoc.createElement('time');
+			var fileTimeVal = gpxDoc.createTextNode(fileTime);
+
+			fileTimeElem.appendChild(fileTimeVal);
+			metadataElem.appendChild(fileTimeElem);
+		}
+
+		return metadataElem;
+	};
+
+	var _createTrackData = function(gpxDoc, trkdata, trkElem) {
+		var name = trkdata.name;
+		var cmt = trkdata.cmt;
+		var descTrack = trkdata.desc;
+		var number = trkdata.number;
+
+		/* GPS name of track */
+		if(name) {
+			var nameElem = gpxDoc.createElement('name');
+			var nameVal = gpxDoc.createTextNode(name);
+
+			nameElem.appendChild(nameVal);
+			trkElem.appendChild(nameElem);
+		}
+
+		/* GPS comment for track */
+		if(cmt) {
+			var cmtElem = gpxDoc.createElement('cmt');
+			var cmtVal = gpxDoc.createTextNode(cmt);
+
+			cmtElem.appendChild(cmtVal);
+			trkElem.appendChild(cmtElem);
+		}
+
+		/* A description of the contents of the GPX file */
+		if(descTrack) {
+			var descElem = gpxDoc.createElement('desc');
+			var descVal = gpxDoc.createTextNode(descTrack);
+
+			descElem.appendChild(descVal);
+			trkElem.appendChild(descElem);
+		}
+
+		/* GPS track number */
+		if(number) {
+			var numberElem = gpxDoc.createElement('number');
+			var numberVal = gpxDoc.createTextNode(number);
+
+			numberElem.appendChild(numberVal);
+			trkElem.appendChild(numberElem);
+		}
+
+		return trkElem;
 	};
 
 	var _createTrkPts = function(gpxDoc, trkpts, trksegElem) {
@@ -99,8 +201,8 @@ function gpxParser() {
 			lonVal,
 			eleElem,
 			eleVal,
-			timeElem,
-			timeVal;
+			ptTimeElem,
+			ptTimeVal;
 
 		for (var pt = 0; trkpts.length > pt; pt++) {
 			trkpt = gpxDoc.createElement('trkpt');
@@ -115,15 +217,15 @@ function gpxParser() {
 			eleElem.appendChild(eleVal);
 
 			/* Get point time */
-			timeElem = gpxDoc.createElement('time');
-			timeVal = gpxDoc.createTextNode(trkpts[pt].time);
-			timeElem.appendChild(timeVal);
+			ptTimeElem = gpxDoc.createElement('time');
+			ptTimeVal = gpxDoc.createTextNode(trkpts[pt].time);
+			ptTimeElem.appendChild(ptTimeVal);
 
 			/* Mounting of the point tree */
 			trkpt.setAttribute('lat', latVal);
 			trkpt.setAttribute('lon', lonVal);
 			trkpt.appendChild(eleElem);
-			trkpt.appendChild(timeElem);
+			trkpt.appendChild(ptTimeElem);
 
 			trksegElem.appendChild(trkpt);
 		}
@@ -133,5 +235,5 @@ function gpxParser() {
 };
 
 
-var gpxParser =  new gpxParser()
-console.log(gpxParser.createGPX());
+var gpxParserInst = new gpxParser();
+console.log(gpxParserInst.parseGPX());
