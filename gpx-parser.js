@@ -1,5 +1,5 @@
 function gpxParser() {
-	this.parseGPX = function() {
+	this.parseJSON = function() {
 
 		/* Example */
 		var jsonExampleData = {
@@ -44,7 +44,7 @@ function gpxParser() {
 		return _toGPX(jsonExampleData);
 	}
 
-	this.parseJSON = function() {
+	this.parseGPX = function() {
 		/* Will be implemented as soon as possible */
 	}
 
@@ -233,7 +233,3 @@ function gpxParser() {
 		return trksegElem;
 	};
 };
-
-
-var gpxParserInst = new gpxParser();
-console.log(gpxParserInst.parseGPX());
