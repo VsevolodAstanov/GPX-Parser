@@ -1,0 +1,32 @@
+<!-- Example of the GPX track -->
+
+<gpx version="1.1" creator="Software that created your GPX document" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.topografix.com/GPX/1/1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+	<metadata>
+		<name>The name of the GPX file</name>
+		<desc>A description of the contents of the GPX file</desc>
+		<author>
+			<name>Author name</name>
+		</author>
+		<time>2007-10-02T07:51:30Z</time>
+	</metadata>
+	<trk>
+		<name>GPS name of track</name>
+		<cmt>GPS comment for track</cmt>
+		<desc>User description of track</desc>
+		<number>1</number>
+		<trkseg>
+			<trkpt lat="46.57608333" lon="8.89241667">
+				<ele>2373</ele>
+				<time>2007-10-02T07:51:30Z</time>
+			</trkpt>
+			<trkpt lat="46.57619444" lon="8.89252778">
+				<ele>2375</ele>
+				<time>2007-10-02T07:56:30Z</time>
+			</trkpt>
+			<trkpt lat="46.57641667" lon="8.89266667">
+				<ele>2372</ele>
+				<time>2007-10-02T07:59:30Z</time>
+			</trkpt>
+		</trkseg>
+	</trk>
+</gpx>
