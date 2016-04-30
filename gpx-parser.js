@@ -27,22 +27,18 @@
 
 		var _toJSON = function(gpxData) {
 
-			var jsonGPX = {};
+			var jsonGPX = {
+				"gpx" : {}
+			};
 
 			/* Init XML parser */
 			var xmlDoc = new DOMParser().parseFromString(gpxData, "text/xml");
 
-			var gpx = _parseRoot(xmlDoc);
+			var gpx = _parseRoot(xmlDoc, jsonGPX);
+			jsonGPX.gpx.metadata = _parseMetadata(gpx);
+			jsonGPX.gpx.trk = _parseTrackData(gpx);
 
-			jsonGPX.metadata = _parseMetadata(gpx);
-			jsonGPX.trk = _parseTrackData();
-
-			var fileName = '';
-			var descript = '';
-			var author = '';
-			var time = '';
-
-			return jsonGPX;
+			return JSON.stringify(jsonGPX);
 		};
 
 		var _toGPX = function(jsonData) {
@@ -90,15 +86,20 @@
 			return gxpElem;
 		};
 
-		var _parseRoot = function(xmlDoc) {
+		var _parseRoot = function(xmlDoc, jsonGPX) {
 
 			var gpx = xmlDoc.getElementsByTagName('gpx')[0];
 
 			/* Check version */
 			var version = gpx.getAttribute('version');
-
 			if(version != '1.1') {
 				throw new Error('The current version of the track is not supported');
+			}
+			jsonGPX.gpx.version = version;
+
+			var creator = gpx.getAttribute('creator');
+			if(creator) {
+				jsonGPX.gpx.creator = creator;
 			}
 
 			return gpx;
@@ -153,12 +154,37 @@
 		};
 
 		var _parseMetadata = function(gpx) {
-			/* Getting metadata values */
-			var metadata = gpx.getElementsByTagName('metadata');
+			var metadata = {};
 
-			if(!metadata) {
+			/* Getting metadata values */
+			var metadataElem = gpx.getElementsByTagName('metadata')[0];
+
+			if(!metadataElem) {
 				throw new Error('No important element: metadata');
 			}
+
+			var nameElem = metadataElem.getElementsByTagName('name')[0];
+			if(nameElem) {
+				metadata.name = nameElem.textContent;
+			}
+			var descElem = metadataElem.getElementsByTagName('desc')[0];
+			if(descElem) {
+				metadata.desc = descElem.textContent;
+			}
+			var authorElem = metadataElem.getElementsByTagName('author')[0];
+			if(authorElem) {
+				var authorElemName = metadataElem.getElementsByTagName('name')[0];
+				if(authorElemName) {
+					metadata.author = {};
+					metadata.author.name = authorElemName.textContent;
+				}
+			}
+			var timeElem = metadataElem.getElementsByTagName('time')[0];
+			if(timeElem) {
+				metadata.time = timeElem.textContent;
+			}
+
+			return metadata;
 		};
 
 		var _createTrackData = function(gpxDoc, trk, trkElem) {
@@ -221,8 +247,8 @@
 				trkptElem = gpxDoc.createElement('trkpt');
 
 				/* Get LatLng attributes */
-				latVal = trkpt[pt]._lat;
-				lonVal = trkpt[pt]._lon;
+				latVal = trkpt[pt].lat;
+				lonVal = trkpt[pt].lon;
 
 				/* Get elevation/altitude value */
 				eleElem = gpxDoc.createElement('ele');
@@ -248,54 +274,60 @@
 			return trkElem;
 		};
 
-		var _parseTrackData = function() {
+		var _parseTrackData = function(gpx) {
+			var trk = {};
 
+			/* Getting metadata values */
+			var trkElem = gpx.getElementsByTagName('trk')[0];
+			if(!trkElem) {
+				throw new Error('No important element: trk');
+			}
+
+			var trksegElem = trkElem.getElementsByTagName('trkseg')[0];
+			if(!trksegElem) {
+				throw new Error('No important element: trkseg');
+			}
+
+			var trkptElem = trkElem.getElementsByTagName('trkpt');
+			if(!trkptElem) {
+				throw new Error('No important element: trkpt');
+			}
+
+			trk.trkseg = {};
+			trk.trkseg.trkpt = [];
+
+			var	ptEle,
+				ptTime;
+
+			/* Parse and convert all points */
+			for (var pt = 0; trkptElem.length > pt; pt++) {
+				var ptObj = {};
+
+				if(!trkptElem[pt].hasAttribute('lat')) {
+					throw new Error('No important element: lat');
+				}
+
+				if(!trkptElem[pt].hasAttribute('lon')) {
+					throw new Error('No important element: lon');
+				}
+
+				ptObj.lat = trkptElem[pt].getAttribute("lat");
+				ptObj.lon = trkptElem[pt].getAttribute("lon");
+
+				ptEle = trkptElem[pt].getElementsByTagName('ele')[0];
+				if(ptEle) {
+					ptObj.ele = ptEle.textContent;
+				}
+
+				ptTime = trkptElem[pt].getElementsByTagName('time')[0];;
+				if(ptTime) {
+					ptObj.time = ptTime.textContent;
+				}
+
+				trk.trkseg.trkpt.push(ptObj);
+			}
+
+			return trk;
 		};
 	};
-
-	/* Example */
-	var jsonExampleData = {
-		"gpx": {
-			"_creator": "Software that created your GPX document",
-			"metadata": {
-				"name": "The name of the GPX file",
-			 	"desc": "A description of the contents of the GPX file",
-				"author": { "name": "Author name" },
-			 	"time": "2007-10-02T07:51:30Z"
-			},
-			"trk": {
-				"name": "GPS name of track",
-				"cmt": "GPS comment for track",
-				"desc": "User description of track",
-				"number": "1",
-				"trkseg": {
-					"trkpt": [{
-						"_lat": "46.57608333",
-						"_lon": "8.89241667",
-						"ele": "2373",
-						"time": "2007-10-02T07:51:30Z"
-				  	}, {
-						"_lat": "46.57619444",
-						"_lon": "8.89252778",
-						"ele": "2375",
-						"time": "2007-10-02T07:56:30Z"
-				  	}, {
-						"_lat": "46.57641667",
-						"_lon": "8.89266667",
-						"ele": "2372",
-						"time": "2007-10-02T07:59:30Z"
-					}]
-				}
-			}
-		}
-	};
-
-	var gpxExampleData = '<gpx version="1.1" creator="Software that created your GPX document" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.topografix.com/GPX/1/1" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd"><metadata><name>The name of the GPX file</name><desc>A description of the contents of the GPX file</desc><author><name>Author name</name></author><time>2007-10-02T07:51:30Z</time></metadata><trk><name>GPS name of track</name><cmt>GPS comment for track</cmt><desc>User description of track</desc><number>1</number><trkseg><trkpt lat="46.57608333" lon="8.89241667"><ele>2373</ele><time>2007-10-02T07:51:30Z</time></trkpt><trkpt lat="46.57619444" lon="8.89252778"><ele>2375</ele><time>2007-10-02T07:56:30Z</time></trkpt><trkpt lat="46.57641667" lon="8.89266667"><ele>2372</ele><time>2007-10-02T07:59:30Z</time></trkpt></trkseg></trk></gpx>';
-
-
-	var GParser = new GPXParser();
-	GParser.parseGPX(gpxExampleData);
-	console.log(GParser.parseJSON(jsonExampleData));
-
 })();
-
